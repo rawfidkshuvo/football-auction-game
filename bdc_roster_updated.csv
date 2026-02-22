@@ -1,0 +1,78 @@
+Position,Name,Category
+GK,Gianluigi Donnarumma,S
+GK,Thibaut Courtois,S
+GK,David Raya,A
+GK,Diogo Costa,A
+GK,Emiliano Martínez,B
+GK,Robert Sánchez,B
+GK,Mike Maignan,B
+LB,Nuno Mendes,S
+LB,Federico Dimarco,S
+LB,Theo Hernández,A
+LB,Joško Gvardiol,A
+LB,Alphonso Davies,B
+LB,Destiny Udogie,B
+LB,Alejandro Balde,B
+CB,William Saliba,S
+CB,Virgil van Dijk,S
+CB,Rúben Dias,S
+CB,Antonio Rüdiger,S
+CB,Gabriel Magalhães,A
+CB,Alessandro Bastoni,A
+CB,Cristian Romero,A
+CB,Ibrahima Konaté,A
+CB,Micky van de Ven,B
+CB,Pau Cubarsí,B
+CB,Nico Schlotterbeck,B
+CB,Marc Guéhi,B
+CB,Gleison Bremer,B
+CB,Eder Militão,B
+RB,Achraf Hakimi,S
+RB,Jules Koundé,S
+RB,Trent Alexander-Arnold,A
+RB,Dani Carvajal,A
+RB,Jeremie Frimpong,B
+RB,Ben White,B
+RB,Diogo Dalot,B
+DMF,Rodri,S
+DMF,Declan Rice,S
+DMF,Martin Zubimendi,A
+DMF,Aurélien Tchouaméni,A
+DMF,Bruno Guimarães,B
+DMF,João Palhinha,B
+DMF,Manuel Locatelli,B
+CMF,Jude Bellingham,S
+CMF,Pedri,S
+CMF,Federico Valverde,S
+CMF,Vitinha,S
+CMF,Martin Ødegaard,A
+CMF,Bruno Fernandes,A
+CMF,Alexis Mac Allister,A
+CMF,Jamal Musiala,A
+CMF,Scott McTominay,B
+CMF,Dominik Szoboszlai,B
+CMF,Ryan Gravenberch,B
+CMF,Gavi,B
+CMF,Warren Zaïre-Emery,B
+CMF,Enzo Fernández,B
+LW,Vinícius Júnior,S
+LW,Khvicha Kvaratskhelia,S
+LW,Rafael Leão,A
+LW,Luis Díaz,A
+LW,Anthony Gordon,B
+LW,Alejandro Garnacho,B
+LW,Bradley Barcola,B
+FW,Kylian Mbappé,S
+FW,Erling Haaland,S
+FW,Harry Kane,A
+FW,Robert Lewandowski,A
+FW,Lautaro Martínez,B
+FW,Viktor Gyökeres,B
+FW,Alexander Isak,B
+RW,Mohamed Salah,S
+RW,Bukayo Saka,S
+RW,Lamine Yamal,A
+RW,Ousmane Dembélé,A
+RW,Phil Foden,B
+RW,Michael Olise,B
+RW,Takefusa Kubo,B

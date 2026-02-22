@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
 import { getFirestore, doc, setDoc, updateDoc, onSnapshot, runTransaction, getDoc } from 'firebase/firestore';
-import { Trophy, Clock, Users, Play, DollarSign, Shield, List, AlertCircle, CheckCircle, Settings, Save, Check } from 'lucide-react';
+import { Trophy, Clock, Users, Play, DollarSign, Shield, List, AlertCircle, CheckCircle, Settings, Save, Check, Download, Upload } from 'lucide-react';
 
 // --- FIREBASE INITIALIZATION ---
 const firebaseConfig = {
@@ -513,6 +513,64 @@ function LobbyScreen({ room, userId, onStart, onSaveRoster }) {
     setEditingSettings(false);
   };
 
+  const exportCSV = () => {
+    let csvContent = "Position,Name,Category\n";
+    POSITIONS.forEach(pos => {
+      if (localRoster[pos]) {
+        localRoster[pos].forEach(p => {
+          csvContent += `${pos},${p.name},${p.category}\n`;
+        });
+      }
+    });
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "bdc_roster.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const importCSV = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target.result;
+      const lines = text.split('\n');
+      const newRoster = {};
+      POSITIONS.forEach(pos => newRoster[pos] = []);
+
+      lines.forEach((line, index) => {
+        if (index === 0 && line.toLowerCase().includes('position')) return; // Skip header
+        const parts = line.split(',');
+        if (parts.length >= 3) {
+          const pos = parts[0]?.trim();
+          const name = parts[1]?.trim();
+          const category = parts[2]?.trim().toUpperCase();
+          if (POSITIONS.includes(pos) && name && ['S', 'A', 'B'].includes(category)) {
+            newRoster[pos].push({ name, category });
+          }
+        }
+      });
+
+      // Pad any missing slots with default placeholders to prevent game crashes
+      POSITIONS.forEach(pos => {
+        const requiredCount = POSITION_COUNTS[pos] * 7;
+        while (newRoster[pos].length < requiredCount) {
+           const i = newRoster[pos].length;
+           const cat = i < POSITION_COUNTS[pos] * 2 ? 'S' : (i < POSITION_COUNTS[pos] * 4 ? 'A' : 'B');
+           newRoster[pos].push({ name: `${pos}${i + 1}`, category: cat });
+        }
+      });
+
+      setLocalRoster(newRoster);
+    };
+    reader.readAsText(file);
+    e.target.value = null; // Reset input so the same file can be uploaded again if needed
+  };
+
   return (
     <div className="grid lg:grid-cols-2 gap-4 sm:gap-6 md:gap-8 w-full">
       <div className="bg-slate-800 rounded-xl p-4 sm:p-5 md:p-6 border border-slate-700 order-2 lg:order-1 w-full overflow-hidden">
@@ -565,11 +623,20 @@ function LobbyScreen({ room, userId, onStart, onSaveRoster }) {
           </>
         ) : (
           <div className="w-full text-left overflow-hidden">
-             <div className="flex justify-between items-center mb-3 sm:mb-4">
+             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-3 sm:mb-4">
                <h3 className="font-bold text-base sm:text-lg flex items-center gap-1.5 sm:gap-2"><Settings className="w-4 h-4 sm:w-5 h-5 flex-shrink-0"/> <span className="truncate">Edit Roster</span></h3>
-               <button onClick={handleSaveSettings} className="bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 sm:px-3 sm:py-1 rounded text-xs sm:text-sm font-semibold flex items-center gap-1 flex-shrink-0">
-                 <Save className="w-3 h-3 sm:w-4 sm:h-4"/> Save
-               </button>
+               <div className="flex flex-wrap gap-2 w-full sm:w-auto justify-end">
+                 <label className="bg-slate-700 hover:bg-slate-600 text-white px-2 py-1.5 sm:px-3 sm:py-1 rounded text-[10px] sm:text-xs font-semibold flex items-center gap-1 cursor-pointer transition">
+                   <Upload className="w-3 h-3"/> Import
+                   <input type="file" accept=".csv" onChange={importCSV} className="hidden" />
+                 </label>
+                 <button onClick={exportCSV} className="bg-slate-700 hover:bg-slate-600 text-white px-2 py-1.5 sm:px-3 sm:py-1 rounded text-[10px] sm:text-xs font-semibold flex items-center gap-1 transition">
+                   <Download className="w-3 h-3"/> Export
+                 </button>
+                 <button onClick={handleSaveSettings} className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 sm:px-4 sm:py-1 rounded text-xs sm:text-sm font-semibold flex items-center gap-1 flex-shrink-0 transition">
+                   <Save className="w-3 h-3 sm:w-4 sm:h-4"/> Save
+                 </button>
+               </div>
              </div>
              
              <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-2 mb-3 sm:mb-4 [&::-webkit-scrollbar]:hidden border-b border-slate-700 w-full">
@@ -654,14 +721,19 @@ function BiddingScreen({ room, userId, placeBid, toggleReady }) {
     <div className="grid lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 w-full">
       
       {/* MOBILE HUD - Only visible on small screens */}
-      <div className="lg:hidden bg-slate-800 p-3 sm:p-4 rounded-xl border border-slate-700 flex justify-between items-center shadow-lg sticky top-0 z-20 w-full">
-         <div className="flex-1 min-w-0 pr-2">
-            <div className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-bold tracking-wider truncate">My Budget</div>
-            <div className={`text-base sm:text-lg lg:text-xl font-mono font-bold truncate ${me.budget < 200 ? 'text-red-400' : 'text-green-400'}`}>${me.budget}m</div>
+      <div className="lg:hidden bg-slate-800 p-3 sm:p-4 rounded-xl border border-slate-700 shadow-lg sticky top-0 z-20 w-full flex flex-col gap-2">
+         <div className="flex justify-between items-center w-full">
+            <div className="flex-1 min-w-0 pr-2">
+               <div className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-bold tracking-wider truncate">My Budget</div>
+               <div className={`text-base sm:text-lg lg:text-xl font-mono font-bold truncate ${me.budget < 200 ? 'text-red-400' : 'text-green-400'}`}>${me.budget}m</div>
+            </div>
+            <div className="text-right flex-shrink-0 pl-2 border-l border-slate-700">
+               <div className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-bold tracking-wider">Squad</div>
+               <div className="text-base sm:text-lg lg:text-xl font-bold text-white">{me.team.length} <span className="text-xs sm:text-sm text-slate-500">/ 11</span></div>
+            </div>
          </div>
-         <div className="text-right flex-shrink-0 pl-2 border-l border-slate-700">
-            <div className="text-[9px] sm:text-[10px] text-slate-400 uppercase font-bold tracking-wider">Squad</div>
-            <div className="text-base sm:text-lg lg:text-xl font-bold text-white">{me.team.length} <span className="text-xs sm:text-sm text-slate-500">/ 11</span></div>
+         <div className="w-full bg-slate-900 rounded-full h-1.5 mt-1">
+           <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${(me.team.length / 11) * 100}%` }}></div>
          </div>
       </div>
 
@@ -690,11 +762,18 @@ function BiddingScreen({ room, userId, placeBid, toggleReady }) {
           <div className="grid grid-cols-2 gap-1.5 sm:gap-4 mb-4 sm:mb-6 md:mb-8">
             <div className="bg-slate-900 rounded-lg p-2 sm:p-3 md:p-4 border border-slate-700 flex flex-col items-center justify-center text-center w-full overflow-hidden">
               <span className="text-slate-400 text-[8px] sm:text-[10px] md:text-sm uppercase font-semibold mb-0.5 sm:mb-1">
-                {state.phase === 'sold' ? 'Final Price' : 'Current Bid'}
+                {state.phase === 'sold' ? 'Final Price' : (state.highestBidder ? 'Current Bid' : 'Base Price')}
               </span>
               <span className="text-xl sm:text-3xl md:text-4xl font-mono font-bold text-green-400 truncate w-full px-1">
                 ${state.phase === 'sold' ? state.lastPrice : state.currentBid}m
               </span>
+              {state.phase !== 'sold' && (
+                <span className="text-[8px] sm:text-[10px] md:text-sm mt-0.5 sm:mt-1 md:mt-2 text-slate-300 truncate w-full px-1">
+                  {state.highestBidder 
+                    ? (state.highestBidder === userId ? 'You lead!' : `${room.participants[state.highestBidder]?.name || 'Someone'} leads`) 
+                    : 'No bids yet'}
+                </span>
+              )}
             </div>
             <div className="bg-slate-900 rounded-lg p-2 sm:p-3 md:p-4 border border-slate-700 flex flex-col items-center justify-center w-full overflow-hidden">
               <span className="text-slate-400 text-[8px] sm:text-[10px] md:text-sm uppercase font-semibold mb-0.5 sm:mb-1">Time Left</span>
@@ -924,12 +1003,12 @@ function FormationPitch({ team, compact = false }) {
           `}>
             {p.position}
           </div>
-          <div className={`flex flex-col items-center bg-black/70 rounded px-0.5 sm:px-1 mt-0.5 sm:mt-1 truncate ${compact ? 'max-w-[35px] sm:max-w-[40px]' : 'max-w-[45px] sm:max-w-[60px]'}`}>
-             <div className={`text-white font-semibold truncate w-full text-center ${compact ? 'text-[7px] sm:text-[8px] md:text-[9px]' : 'text-[8px] sm:text-[9px] md:text-xs'}`}>
+          <div className="flex flex-col items-center bg-black/70 rounded px-1 mt-0.5 sm:mt-1">
+             <div className={`text-white font-semibold text-center whitespace-nowrap px-1 ${compact ? 'text-[7px] sm:text-[8px] md:text-[9px]' : 'text-[8px] sm:text-[9px] md:text-xs'}`}>
                {p.name}
              </div>
              {p.purchasedPrice !== undefined && (
-               <div className={`text-yellow-400 font-mono font-bold w-full text-center ${compact ? 'text-[6px] sm:text-[7px] md:text-[8px]' : 'text-[7px] sm:text-[8px] md:text-[10px]'}`}>
+               <div className={`text-yellow-400 font-mono font-bold text-center px-1 ${compact ? 'text-[6px] sm:text-[7px] md:text-[8px]' : 'text-[7px] sm:text-[8px] md:text-[10px]'}`}>
                  ${p.purchasedPrice}m
                </div>
              )}
